@@ -1,6 +1,6 @@
 #Autumn Leaves Rain.
 
-import sys, pygame, time, random, threading
+import sys, pygame, time, random
 
 from pygame.locals import *
 
