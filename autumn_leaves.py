@@ -1,108 +1,156 @@
 #Autumn Leaves Rain.
 
-import sys, pygame, time, random
-
+import pygame, sys, time, random
 from pygame.locals import *
 
 pygame.init()
 
-width = 1000
+pygame.display.set_caption("The Falling Leaves...")
 
-class Settings():
-	""" storage of settings """
- 
-	def __init__(self):
-		"""starts settings"""
-		
-		self.screen_width = width 						      #window width
-		self.screen_height = 500						      #window height
-		self.maincolor = (165,113,100)					              #background color
-leaves = []										      #list with different leaf images
+#screen settings.
+screen_width = 900
+screen_height = 400
+screen_backcolor = (92, 61, 46)
+screen = pygame.display.set_mode((screen_width, screen_height),0,32)
+screen.fill(screen_backcolor)
 
-for value in range(0,9):								      #loop that generates leaves images list
+#list of tracks.
+playlist = []							
+							 
+for value in range(1,9):
+	playlist.append(str(value) + ".ogg")
+
+#lengths of tracks
+lengths = [278000, 658000, 213000, 422000, 
+340000, 379000, 445000, 464000, 305000] 
+
+#picks a random track from playlist each time.	
+for p in playlist:
+	r = random.choice(playlist)
+	pygame.mixer.music.load(r)				
+
+#loads background music.
+pygame.mixer.music.play(-1, 0.0)		
+
+#dictionary that contains each track within playlist paired to its length.
+lengths_playlist = dict(zip(playlist, lengths))
+
+#variable for event to quit program after track ends.
+LENGTH = lengths_playlist.get(r)
+
+#list of leaf pics to be used in Leaf class.
+leaves = []								
+for value in range(0,9):
 	leaves.append(str(value) + ".png")
-		
-class Leaves():
-	
-	def __init__(self, pantalla):
-		"""attributes for each leaf from leaves_rain"""
-		
-		super(Leaves, self).__init__()				
-		
-		self.pantalla = pantalla						      #makes leaf appear on screen
-		self.path = random.choice(leaves)				              #path to leaf pic
-		self.image = pygame.image.load(self.path)		          	      #makes leaf image from path
-			
-		self.rect = self.image.get_rect()				              #gets leaf image rectangle attributes
-		self.pantalla_rect = pantalla.get_rect()		                      #gets screen dimentions
-		
-		self.rect.right = random.randint(120, width)	        #leaf image right horizontal position
-		self.rect.top = self.pantalla_rect.top - 180	        #leaf image top vertical position
-		
-	def update(self):
-		"""update leaves' position based on movement by gravity"""
-			
-	def blitme(self):
-		"""draws the leaves at location specified by self.rect"""
-		self.pantalla.blit(self.image, self.rect)
 
-def autumn_leaves_rain():
-	"""autumn_leaves main funcion"""
+#class that defines and controls Leaf sprites.	
+class Leaf(pygame.sprite.Sprite):		
 	
-	ti_settings = Settings()
-	
-	pantalla = pygame.display.set_mode(					        #window settings
-	(ti_settings.screen_width, 
-	ti_settings.screen_height))
-	
-	caption = pygame.display.set_caption(				          	#window main bar message
-	"The falling leaves...")
-	
-	playlist = ['0.wav', '1.wav', '2.wav', 
-              '3.wav', '4.wav', '5.wav']                				#list of tracks
-	
-	for track in playlist:
-	
-		pygame.mixer.music.load(random.choice(playlist))		       	#random pick from list of tracks
-	
-	pygame.mixer.music.play(-1, 0.0)					
-	
-	clock = pygame.time.Clock()							#sets clock for animation to happen
+	def __init__(self):
 		
-	gravities = []									#list with different gravity values for leaves to fall at different speeds
-	
-	leaf_objects = []								#list with different leaf objects
-	
-	def autumn_leaf():
-		"""creates each leaf object"""
-						
-		pantalla.fill(ti_settings.maincolor)			  		#updates the screen after leaf object passes through
+		pygame.sprite.Sprite.__init__(self)
 		
-		for (obj, gravity) in zip(leaf_objects, 				#loop generates a falling leaf image with random gravity and image
-									gravities):
+		"""object's apeparance"""
+		self.path = random.choice(leaves)
+		self.image = pygame.image.load(self.path)
+		self.rect = self.image.get_rect()
+		"""object's position"""
+		self.rect.x = random.randint(0, screen_width-100)
+		self.rect.y = -150
+
+clock = pygame.time.Clock()
+
+#list to control draw and update within loop.
+rains = []							
+
+#each sprite group contains leaves falling at different speeds.
+rain1 = pygame.sprite.Group()			 
+rains.append(rain1)	
+										
+rain2 = pygame.sprite.Group()					
+rains.append(rain2)						
+												
+rain3 = pygame.sprite.Group()
+rains.append(rain3)								
+
+#events t/control when e/type o/leaf appears (refactoring needed).
+LEAF1 = pygame.USEREVENT + 0			
+pygame.time.set_timer(LEAF1, 500)
+
+LEAF2 = pygame.USEREVENT + 1
+pygame.time.set_timer(LEAF2, 2000)
+
+LEAF3 = pygame.USEREVENT + 2
+pygame.time.set_timer(LEAF3, 10000)
+
+TRACKLENGTH = pygame.USEREVENT + 3
+pygame.time.set_timer(TRACKLENGTH, LENGTH)
+
+#distance at which Leaf sprite is removed from group.
+kill_distance = screen_height + 50		
+
+#falling leaves loop. (refactoring needed).
+while True:	
+
+	screen.fill(screen_backcolor)
+
+	for event in pygame.event.get():
 		
-			obj.rect.bottom += gravity          				#leaves fall
-			obj.update()                        
-			obj.blitme()                       
+		if event.type == QUIT:
+			pygame.quit()
+			sys.exit()
 			
-		pygame.display.flip()
-		pygame.display.update()
-									
-	while True:									 #loop that controls leaves rain
-						
-		gravities.append(random.randint(1,3))
-		gravities.append(1)			              			 #random gravity to change falling speed each time new leaves are generated
+		if event.type == TRACKLENGTH:
+			pygame.quit()
+			sys.exit()
+
+		if event.type == LEAF1:
+	
+			leaf1 = Leaf()
+			rain1.add(leaf1)
 		
-		for leaf in range(40):							 #creates several leaves from function autumn_leaf()
+		if event.type == LEAF2:
+	
+			leaf2 = Leaf()
+			rain2.add(leaf2)
 			
-			leaf = Leaves(pantalla)
-			leaf_objects.append(leaf)
-			autumn_leaf()
+		if event.type == LEAF3:
+	
+			leaf3 = Leaf()
+			rain3.add(leaf3)
 			
-			clock.tick(70)							 #frames per second
+	for a in rain1:
 				
-		for event in pygame.event.get():
-			if event.type == pygame.QUIT:
-				sys.exit()
+		a.rect.y += 1
+	
+		if a.rect.y == kill_distance:	
+			a.kill()
+			
+	for b in rain2:
+				
+		b.rect.y += 2
+	
+		if b.rect.y == kill_distance:	
+			b.kill()
+	
+	for c in rain3:
+				
+		c.rect.y += 5
+	
+		if c.rect.y == kill_distance:	
+			c.kill()
+	
+	for rain in rains:
+		
+		rain.update()
+		rain.draw(screen)
+	
+	pygame.display.flip()
+	pygame.display.update()
 
-autumn_leaves_rain()
+	clock.tick(40)
+
+
+### Things to consider:
+# Event timer and gravities: somehow, not all gravities work for sprites to be killed within loop when specified, but unable to understand why. The following are pairs of vertical motion and time frames that work: (5:2500,5000), (1:500,1000), (2:2000,4000).
+# A list of other nice RGB colors that can be used in the background: rgb(165,113,100) rgb(176, 155, 113) rgb(173, 139, 115) rgb(112, 79, 79) rgb(92, 61, 46)
